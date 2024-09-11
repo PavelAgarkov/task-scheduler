@@ -2,6 +2,8 @@
 
 Запуск параллельных процессов по расписанию
 
+```go get github.com/PavelAgarkov/task-scheduler@rc-2```
+
 1. Конфигурирование задач
    ```
 	ml2 := &structs.ExampleLocator{Sn: "main2"}
