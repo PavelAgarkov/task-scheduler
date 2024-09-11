@@ -3,12 +3,12 @@ package task_scheduler
 import (
 	"context"
 	"fmt"
+	"github.com/PavelAgarkov/task-scheduler/structs"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
-	"task-scheduler/structs"
 	"testing"
 	"time"
 )

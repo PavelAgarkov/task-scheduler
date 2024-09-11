@@ -2,8 +2,8 @@ package task_scheduler
 
 import (
 	"context"
+	"github.com/PavelAgarkov/task-scheduler/structs"
 	"log"
-	"task-scheduler/structs"
 	"time"
 )
 
