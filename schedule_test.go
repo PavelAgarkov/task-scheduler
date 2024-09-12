@@ -48,7 +48,8 @@ func TestPositive(t *testing.T) {
 				DependsOf: map[string]struct{}{
 					"api.UpdateFeatureFlags1": {},
 				},
-				Locator: ml2,
+				DependsDuration: 100 * time.Millisecond,
+				Locator:         ml2,
 			},
 			{
 				BackgroundJobFunc:         Test3,
@@ -61,7 +62,8 @@ func TestPositive(t *testing.T) {
 					"api.UpdateFeatureFlags2": {},
 					//"e.UpdateFeatureFlags4":   {},
 				},
-				Locator: ml3,
+				DependsDuration: 100 * time.Millisecond,
+				Locator:         ml3,
 			},
 		},
 	)
@@ -82,6 +84,6 @@ func TestPositive(t *testing.T) {
 	logs := life.GetScheduleLogTime(time.DateTime)
 	log.Println(logs)
 
-	log.Println(runtime.NumGoroutine(), "in_main_end", "first - main, second - signal")
+	log.Println(runtime.NumGoroutine(), "in_main_end", "first - main, second - signal, third - test")
 	log.Println(fmt.Sprintf("Alive %v", life.Alive()))
 }

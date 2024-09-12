@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -82,7 +81,8 @@ func (l *ScheduleLife) Stop() {
 		if alive == 0 {
 			log.Println(alive, "await alive")
 			for _, v := range l.listOfSchedulers {
-				atomic.StoreInt64(&v.aliveGo, 0)
+				//atomic.StoreInt64(&v.aliveGo, 0)
+				v.resetAliveGo()
 			}
 		}
 	}

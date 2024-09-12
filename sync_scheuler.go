@@ -29,6 +29,7 @@ type BackgroundConfiguration struct {
 	LifeCheckDuration         time.Duration
 	Locator                   ServiceLocator
 	DependsOf                 map[string]struct{}
+	DependsDuration           time.Duration
 }
 
 func newScheduler(config BackgroundConfiguration) *syncScheduler {
@@ -43,6 +44,10 @@ func (ss *syncScheduler) getAliveGo() int64 {
 
 func (ss *syncScheduler) incrementAliveGo() {
 	atomic.AddInt64(&ss.aliveGo, 1)
+}
+
+func (ss *syncScheduler) resetAliveGo() {
+	atomic.StoreInt64(&ss.aliveGo, 0)
 }
 
 func (ss *syncScheduler) decrementAliveGo() {
@@ -82,15 +87,22 @@ func (ss *syncScheduler) runSchedule(importCtx context.Context, scheduleLife *Sc
 func (ss *syncScheduler) runJob(ctx context.Context, scheduleLife *ScheduleLife, locator ServiceLocator) {
 	ss.incrementAliveGo()
 
+	//выполняется после recover
 	defer func() {
 		ss.decrementAliveGo()
 	}()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Println(fmt.Sprintf("syncScheduler.runJob() %s %s Has Recovered. Error: %s", ss.config.AppName, ss.config.BackgroundJobName, r))
+			log.Println(fmt.Sprintf("syncScheduler.runJob() %s %s Has been Recovered. Error: %s", ss.config.AppName, ss.config.BackgroundJobName, r))
 		}
 	}()
 
+	dependsDuration := ss.config.DependsDuration
+	if dependsDuration == 0 {
+		dependsDuration = 100 * time.Millisecond
+	}
+
+	// выполняет поочереденый доступ к запуску зависиостей на старте программы
 dependsLoop:
 	for {
 		if len(ss.config.DependsOf) == 0 {
@@ -100,7 +112,7 @@ dependsLoop:
 		case <-ctx.Done():
 			log.Println("job context exit")
 			return
-		case <-time.After(100 * time.Millisecond):
+		case <-time.After(dependsDuration):
 			doneExpectedGoroutines := 0
 			for k := range ss.config.DependsOf {
 				logHit := scheduleLife.getScheduleLogTime(k)
