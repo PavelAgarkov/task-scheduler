@@ -26,6 +26,7 @@
 				DependsOf: map[string]struct{}{
 					"api.UpdateFeatureFlags1": {},
 				},
+                DependsDuration: 100 * time.Millisecond,
 				Locator: ml2,
 			},
 			{
@@ -38,6 +39,7 @@
 					"api.UpdateFeatureFlags1": {},
 					"api.UpdateFeatureFlags2": {},
 				},
+                DependsDuration: 100 * time.Millisecond,
 				Locator: ml3,
 			},
 		}},
@@ -46,7 +48,7 @@
    
 2. Запуск
 ```
-	life.Run(ctx)
+	life.Run()
 ```
 
 3. Выключение

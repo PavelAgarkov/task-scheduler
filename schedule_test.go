@@ -1,7 +1,6 @@
 package task_scheduler
 
 import (
-	"context"
 	"fmt"
 	"github.com/PavelAgarkov/task-scheduler/structs"
 	"log"
@@ -16,8 +15,8 @@ import (
 func TestPositive(t *testing.T) {
 	gcCoont := runtime.NumGoroutine()
 	log.Println(gcCoont, "in_main_start")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
 	sigCh := make(chan os.Signal, 1)
 	defer close(sigCh)
@@ -72,10 +71,10 @@ func TestPositive(t *testing.T) {
 		return
 	}
 
-	life.Run(ctx)
+	life.Run()
 
 	<-sigCh
-	cancel()
+	//cancel()
 
 	log.Println(fmt.Sprintf("Alive %v", life.Alive()))
 	life.Stop()

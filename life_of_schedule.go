@@ -61,11 +61,11 @@ func (l *ScheduleLife) GetScheduleLogTime(format string) map[string]string {
 	return newLog
 }
 
-func (l *ScheduleLife) Run(ctx context.Context) {
+func (l *ScheduleLife) Run() {
 	if l.isRunning() {
 		return
 	}
-	runctx, cancel := context.WithCancel(ctx)
+	runctx, cancel := context.WithCancel(context.Background())
 	l.cancelContext = cancel
 	l.toRun()
 	for _, scheduler := range l.listOfSchedulers {
@@ -81,7 +81,6 @@ func (l *ScheduleLife) Stop() {
 		if alive == 0 {
 			log.Println(alive, "await alive")
 			for _, v := range l.listOfSchedulers {
-				//atomic.StoreInt64(&v.aliveGo, 0)
 				v.resetAliveGo()
 			}
 		}
