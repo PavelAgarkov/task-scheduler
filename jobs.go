@@ -45,7 +45,7 @@ func Test3(ctx context.Context, locator ServiceLocator) error {
 		log.Println("ctx err Test3")
 		return nil
 	}
-	//panic("panic 333")
+	panic("panic 333")
 	ml := locator.(*structs.ExampleLocator)
 	log.Println("end Test3", ml.Sn)
 	return nil

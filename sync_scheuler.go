@@ -4,15 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"runtime"
-	"sync/atomic"
+	"sync"
 	"time"
 )
+
+type jobProperties struct {
+	goName string
+}
 
 type syncScheduler struct {
 	aliveGo int64
 	config  BackgroundConfiguration
+
+	aliveMapMu sync.RWMutex
+	aliveMap   map[string]*jobProperties
 }
 
 type ServiceLocator interface {
@@ -34,24 +42,47 @@ type BackgroundConfiguration struct {
 
 func newScheduler(config BackgroundConfiguration) *syncScheduler {
 	return &syncScheduler{
-		config: config,
+		config:   config,
+		aliveMap: make(map[string]*jobProperties),
 	}
 }
 
-func (ss *syncScheduler) getAliveGo() int64 {
-	return atomic.LoadInt64(&ss.aliveGo)
+func (ss *syncScheduler) getAliveGo() int {
+	ss.aliveMapMu.RLock()
+	n := len(ss.aliveMap)
+	//log.Println("key from goName", ss.aliveMap)
+	ss.aliveMapMu.RUnlock()
+	//return atomic.LoadInt64(&ss.aliveGo)
+	return n
 }
 
 func (ss *syncScheduler) incrementAliveGo() {
-	atomic.AddInt64(&ss.aliveGo, 1)
+	uid, _ := uuid.NewUUID()
+	key := ss.config.AppName + "." + ss.config.BackgroundJobName
+	goName := key + "." + uid.String()
+	ss.aliveMapMu.Lock()
+	ss.aliveMap[key] = &jobProperties{goName: goName}
+	ss.aliveMapMu.Unlock()
+	//atomic.AddInt64(&ss.aliveGo, 1)
 }
 
 func (ss *syncScheduler) resetAliveGo() {
-	atomic.StoreInt64(&ss.aliveGo, 0)
+	ss.aliveMapMu.Lock()
+	if len(ss.aliveMap) > 0 {
+		ss.aliveMap = make(map[string]*jobProperties)
+	} else {
+		log.Println("really len", len(ss.aliveMap))
+	}
+	ss.aliveMapMu.Unlock()
+	//atomic.StoreInt64(&ss.aliveGo, 0)
 }
 
 func (ss *syncScheduler) decrementAliveGo() {
-	atomic.AddInt64(&ss.aliveGo, -1)
+	key := ss.config.AppName + "." + ss.config.BackgroundJobName
+	ss.aliveMapMu.Lock()
+	delete(ss.aliveMap, key)
+	ss.aliveMapMu.Unlock()
+	//atomic.AddInt64(&ss.aliveGo, -1)
 }
 
 func (ss *syncScheduler) runSchedule(importCtx context.Context, scheduleLife *ScheduleLife, locator ServiceLocator) {
@@ -144,26 +175,6 @@ dependsLoop:
 		}
 		return
 	}
-	//case <-time.After(1 * time.Second):
-	//select {
-	//case <-time.After(ss.config.BackgroundJobWaitDuration - 1*time.Second):
-	//	select {
-	//	case <-ctx.Done():
-	//		log.Println("context DONE run 1")
-	//		return
-	//	default:
-	//		key := ss.config.AppName + "." + ss.config.BackgroundJobName
-	//		start := time.Now()
-	//		ss.incrementAliveGo()
-	//		err := ss.config.BackgroundJobFunc(ctx)
-	//		end := time.Now()
-	//		scheduleLife.setScheduleLogTime(start, end, key)
-	//		if err != nil {
-	//			log.Println(fmt.Sprintf("can't background for %s %s", ss.config.AppName, ss.config.BackgroundJobName))
-	//		}
-	//		return
-	//	}
-	//}
 }
 
 func (ss *syncScheduler) toValidate() error {

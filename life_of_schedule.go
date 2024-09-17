@@ -172,18 +172,17 @@ func (l *ScheduleLife) toValidate() error {
 		return nil
 	}
 
-	for s := range deps {
-		ok := func(s string) bool {
-			for _, schedule := range l.listOfSchedulers {
-				key := schedule.config.AppName + "." + schedule.config.BackgroundJobName
-				if s == key {
-					return true
-				}
+	okFunc := func(s string) bool {
+		for _, schedule := range l.listOfSchedulers {
+			key := schedule.config.AppName + "." + schedule.config.BackgroundJobName
+			if s == key {
+				return true
 			}
-			return false
-		}(s)
-
-		if !ok {
+		}
+		return false
+	}
+	for s := range deps {
+		if !okFunc(s) {
 			return errors.New(fmt.Sprintf("%v key not found in passed jobs", s))
 		}
 	}
